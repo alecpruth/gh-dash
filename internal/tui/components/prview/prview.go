@@ -95,6 +95,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 			return m, nil
 
+		case cmpcontroller.ModeRequestReview:
+			usernames := cmp.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.RequestReviewersPR(m.ctx, sid, m.pr.Data.Primary, usernames)
+			}
+			return m, nil
+
 		case cmpcontroller.ModeLabel:
 			labels := cmp.CurrentLabels(submit.Value)
 			if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
@@ -697,6 +704,35 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		Prompt:       constants.UnassignPrompt,
 		InitialValue: strings.Join(m.prAssignees(), "\n"),
 		Repo:         m.repoRef(),
+	})
+	m.editor = editor
+	return cmd
+}
+
+func (m *Model) GetIsRequestingReview() bool {
+	return m.editor.Mode() == cmpcontroller.ModeRequestReview
+}
+
+func (m *Model) SetIsRequestingReview(isRequestingReview bool) tea.Cmd {
+	if m.pr == nil {
+		return nil
+	}
+
+	if !isRequestingReview {
+		if m.editor.Mode() == cmpcontroller.ModeRequestReview {
+			m.editor = m.editor.Exit()
+		}
+		return nil
+	}
+
+	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+		Mode:                             cmpcontroller.ModeRequestReview,
+		Prompt:                           constants.RequestReviewPrompt,
+		Source:                           cmp.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   cmpcontroller.SuggestionUsers,
+		EnterFetch:                       cmpcontroller.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
 	})
 	m.editor = editor
 	return cmd

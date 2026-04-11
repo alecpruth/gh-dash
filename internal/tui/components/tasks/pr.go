@@ -302,6 +302,37 @@ func AssignPR(
 	})
 }
 
+func RequestReviewersPR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+	usernames []string,
+) tea.Cmd {
+	prNumber := pr.GetNumber()
+	args := []string{
+		"pr",
+		"edit",
+		fmt.Sprint(prNumber),
+		"-R",
+		pr.GetRepoNameWithOwner(),
+	}
+	for _, reviewer := range usernames {
+		args = append(args, "--add-reviewer", reviewer)
+	}
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_request_review", prNumber),
+		Args:         args,
+		Section:      section,
+		StartText:    fmt.Sprintf("Requesting review on pr #%d from %s", prNumber, usernames),
+		FinishedText: fmt.Sprintf("Review requested on pr #%d from %s", prNumber, usernames),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			return UpdatePRMsg{
+				PrNumber: prNumber,
+			}
+		},
+	})
+}
+
 func UnassignPR(
 	ctx *context.ProgramContext,
 	section SectionIdentifier,

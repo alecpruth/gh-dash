@@ -27,6 +27,7 @@ const (
 	ModeAssign
 	ModeUnassign
 	ModeLabel
+	ModeRequestReview
 )
 
 type SuggestionKind int
@@ -125,7 +126,7 @@ func (c Controller) View() string {
 	}
 
 	switch c.mode {
-	case ModeComment, ModeApprove, ModeAssign, ModeLabel:
+	case ModeComment, ModeApprove, ModeAssign, ModeLabel, ModeRequestReview:
 		return c.inputBox.ViewWithAutocomplete()
 	default:
 		return c.inputBox.View()
@@ -226,7 +227,8 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		c.repoUsers = msg.Users
 		c.cmp.SetSuggestions(userSuggestions(msg.Users))
 		cmds = append(cmds, c.cmp.SetFetchSuccess())
-		if c.mode == ModeComment || c.mode == ModeApprove || c.mode == ModeAssign {
+		if c.mode == ModeComment || c.mode == ModeApprove || c.mode == ModeAssign ||
+			c.mode == ModeRequestReview {
 			c.showSuggestionsFromCurrentContext()
 		}
 		return c, tea.Batch(cmds...), nil, true
@@ -383,7 +385,7 @@ func (c Controller) showSuggestionsFromCurrentContext() {
 
 func (c Controller) usesAutocomplete() bool {
 	switch c.mode {
-	case ModeComment, ModeApprove, ModeAssign, ModeLabel:
+	case ModeComment, ModeApprove, ModeAssign, ModeLabel, ModeRequestReview:
 		return true
 	default:
 		return false
