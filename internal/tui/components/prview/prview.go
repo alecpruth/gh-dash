@@ -99,7 +99,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, nil
 
 		case cmpcontroller.ModeRequestReview:
-			usernames := cmp.AllWords(submit.Value)
+			usernames := cmp.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.RequestReviewersPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
@@ -720,12 +720,12 @@ func (m *Model) SetIsRequestingReview(isRequestingReview bool) tea.Cmd {
 
 	if !isRequestingReview {
 		if m.editor.Mode() == cmpcontroller.ModeRequestReview {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeRequestReview,
 		Prompt:                           constants.RequestReviewPrompt,
 		Source:                           cmp.WhitespaceSource{},
@@ -734,7 +734,6 @@ func (m *Model) SetIsRequestingReview(isRequestingReview bool) tea.Cmd {
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	m.editor = editor
 	return cmd
 }
 
